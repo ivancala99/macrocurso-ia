@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Debate.AI · British Parliamentary</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=DM+Sans:wght@300;400;500&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #FAFAF8;
+    --surface: #FFFFFF;
+    --raised: #F4F3EF;
+    --border: rgba(0,0,0,0.10);
+    --border-md: rgba(0,0,0,0.18);
+    --ink: #1A1A18;
+    --muted: #6B6B66;
+    --hint: #A0A09A;
+    --blue: #185FA5;
+    --blue-bg: #E6F1FB;
+    --blue-border: #B5D4F4;
+    --blue-dark: #0C447C;
+    --amber-bg: #FAEEDA;
+    --amber-border: #FAC775;
+    --amber-text: #854F0B;
+    --red-bg: #FCEBEB;
+    --red-border: #F7C1C1;
+    --red-text: #A32D2D;
+    --teal-bg: #E1F5EE;
+    --teal-text: #0F6E56;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    font-size: 15px;
+    line-height: 1.5;
+  }
+
+  #app {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 2rem 1rem 4rem;
+  }
+
+  .wordmark {
+    font-family: 'Playfair Display', serif;
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    margin-bottom: 0.2rem;
+  }
+  .tagline { font-size: 13px; color: var(--muted); margin-bottom: 2rem; }
+
+  .panel {
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .panel-title {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.75rem;
+  }
+
+  textarea, input[type=text], input[type=password], select {
+    width: 100%;
+    background: var(--raised);
+    border: 0.5px solid var(--border);
+    border-radius: 8px;
+    padding: 0.6rem 0.8rem;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: var(--ink);
+    outline: none;
+    transition: border-color 0.15s;
+    resize: none;
+  }
+  textarea:focus, input:focus, select:focus {
+    border-color: var(--border-md);
+    background: var(--surface);
+  }
+
+  .role-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+  .role-btn {
+    background: var(--raised);
+    border: 0.5px solid var(--border);
+    border-radius: 8px;
+    padding: 0.65rem 0.85rem;
+    cursor: pointer;
+    text-align: left;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    color: var(--ink);
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .role-btn:hover { border-color: var(--border-md); }
+  .role-btn.selected { border: 2px solid var(--blue); background: var(--blue-bg); color: var(--blue-dark); }
+  .role-btn .rn { font-weight: 500; display: block; }
+  .role-btn .rd { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .role-btn.selected .rd { color: var(--blue); }
+
+  .btn-primary {
+    display: inline-flex; align-items: center; gap: 7px;
+    background: var(--blue); color: #fff;
+    border: none; border-radius: 8px;
+    padding: 0.65rem 1.2rem;
+    font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500;
+    cursor: pointer; transition: background 0.15s, transform 0.1s;
+  }
+  .btn-primary:hover { background: var(--blue-dark); }
+  .btn-primary:active { transform: scale(0.98); }
+  .btn-primary:disabled { background: var(--hint); cursor: not-allowed; }
+
+  .btn-ghost {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: transparent; color: var(--muted);
+    border: 0.5px solid var(--border); border-radius: 8px;
+    padding: 0.55rem 0.9rem;
+    font-family: 'DM Sans', sans-serif; font-size: 13px;
+    cursor: pointer; transition: border-color 0.15s, color 0.15s;
+  }
+  .btn-ghost:hover { border-color: var(--border-md); color: var(--ink); }
+
+  .speech-block {
+    background: var(--raised);
+    border: 0.5px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem 1.25rem;
+    font-size: 14px; line-height: 1.8;
+    color: var(--ink);
+    white-space: pre-wrap;
+    max-height: 380px;
+    overflow-y: auto;
+    min-height: 80px;
+  }
+  .speech-block.streaming::after {
+    content: '▌';
+    animation: blink 0.7s step-end infinite;
+    color: var(--blue);
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  .timer-pill {
+    font-size: 13px; font-weight: 500;
+    color: var(--muted);
+    background: var(--raised);
+    border: 0.5px solid var(--border);
+    border-radius: 20px;
+    padding: 3px 12px;
+    font-variant-numeric: tabular-nums;
+    transition: color 0.3s, background 0.3s, border-color 0.3s;
+  }
+  .timer-pill.active { color: var(--blue); border-color: var(--blue-border); background: var(--blue-bg); }
+  .timer-pill.warning { color: var(--amber-text); border-color: var(--amber-border); background: var(--amber-bg); }
+  .timer-pill.danger { color: var(--red-text); border-color: var(--red-border); background: var(--red-bg); }
+
+  .mic-btn {
+    width: 46px; height: 46px; border-radius: 50%;
+    background: var(--raised); border: 0.5px solid var(--border);
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    font-size: 20px; flex-shrink: 0;
+    transition: background 0.15s;
+  }
+  .mic-btn:hover { background: var(--border); }
+  .mic-btn.recording {
+    background: var(--red-bg); border-color: #E24B4A;
+    animation: pulse 1.2s ease-out infinite;
+  }
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(226,75,74,0.35); }
+    70% { box-shadow: 0 0 0 10px rgba(226,75,74,0); }
+    100% { box-shadow: 0 0 0 0 rgba(226,75,74,0); }
+  }
+
+  .speaking-anim {
+    display: inline-flex; align-items: center; gap: 3px;
+    font-size: 12px; color: var(--blue); font-weight: 500;
+  }
+  .speaking-anim .bar {
+    width: 3px; border-radius: 2px; background: var(--blue);
+    animation: wave 0.8s ease-in-out infinite;
+  }
+  .speaking-anim .bar:nth-child(1) { height: 12px; }
+  .speaking-anim .bar:nth-child(2) { height: 8px; animation-delay: 0.15s; }
+  .speaking-anim .bar:nth-child(3) { height: 16px; animation-delay: 0.3s; }
+  .speaking-anim .bar:nth-child(4) { height: 8px; animation-delay: 0.1s; }
+  @keyframes wave { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(0.35); } }
+
+  .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .spacer { height: 0.75rem; }
+  .divider { border: none; border-top: 0.5px solid var(--border); margin: 1.25rem 0; }
+
+  .badge {
+    display: inline-block; font-size: 11px; font-weight: 500;
+    padding: 2px 8px; border-radius: 6px;
+  }
+  .badge-blue { background: var(--blue-bg); color: var(--blue); }
+  .badge-teal { background: var(--teal-bg); color: var(--teal-text); }
+
+  .section-header {
+    font-family: 'Playfair Display', serif;
+    font-size: 16px; font-weight: 500; margin-bottom: 0.6rem;
+  }
+
+  .status-line { font-size: 12px; color: var(--muted); margin-top: 0.4rem; }
+
+  .key-input-wrap { position: relative; }
+  .key-input-wrap input { padding-right: 70px; font-family: monospace; font-size: 13px; }
+  .key-toggle {
+    position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+    font-size: 11px; color: var(--blue); cursor: pointer; font-weight: 500;
+    background: none; border: none; font-family: 'DM Sans', sans-serif;
+  }
+
+  .refutation-list { list-style: none; }
+  .refutation-list li {
+    padding: 0.5rem 0; border-bottom: 0.5px solid var(--border);
+    font-size: 13px; color: var(--ink);
+  }
+  .refutation-list li:last-child { border-bottom: none; }
+  .ref-label { font-size: 11px; font-weight: 500; color: var(--muted); margin-right: 6px; }
+
+  .collapse { font-size: 12px; color: var(--muted); cursor: pointer; user-select: none; }
+  .collapse:hover { color: var(--ink); }
+
+  .error-box {
+    background: var(--red-bg); border: 0.5px solid var(--red-border);
+    border-radius: 8px; padding: 0.75rem 1rem;
+    font-size: 13px; color: var(--red-text);
+  }
+
+  #setup, #debate { display: none; }
+  #setup.on, #debate.on { display: block; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="wordmark">Debate.AI</div>
+  <p class="tagline">Entrenador virtual · Formato British Parliamentary</p>
+
+  <!-- SETUP -->
+  <div id="setup" class="on">
+
+    <div class="panel">
+      <div class="panel-title">API Key de Anthropic</div>
+      <div class="key-input-wrap">
+        <input type="password" id="api-key" placeholder="sk-ant-api03-…" autocomplete="off">
+        <button class="key-toggle" onclick="toggleKey()">Mostrar</button>
+      </div>
+      <div class="status-line">Tu clave nunca sale de este archivo. Se usa solo localmente.</div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Moción</div>
+      <textarea id="motion" rows="2" placeholder="Esta cámara apoyaría la prohibición de las redes sociales para menores de 16 años"></textarea>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Tu rol en el debate</div>
+      <div class="role-grid">
+        <button class="role-btn" data-role="OG" onclick="pickRole(this)">
+          <span class="rn">Opening Government</span>
+          <span class="rd">Define el modelo · Discurso 1</span>
+        </button>
+        <button class="role-btn" data-role="OO" onclick="pickRole(this)">
+          <span class="rn">Opening Opposition</span>
+          <span class="rd">Refuta y contramodelo · Discurso 2</span>
+        </button>
+        <button class="role-btn" data-role="CG" onclick="pickRole(this)">
+          <span class="rn">Closing Government</span>
+          <span class="rd">Extensión nueva · Discurso 3</span>
+        </button>
+        <button class="role-btn" data-role="CO" onclick="pickRole(this)">
+          <span class="rn">Closing Opposition</span>
+          <span class="rd">Summary y cierre · Discurso 4</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Idioma del discurso</div>
+      <select id="lang">
+        <option value="es">Español</option>
+        <option value="en">English</option>
+        <option value="fr">Français</option>
+      </select>
+    </div>
+
+    <div class="row">
+      <button class="btn-primary" onclick="startDebate()">Comenzar debate →</button>
+    </div>
+  </div>
+
+  <!-- DEBATE -->
+  <div id="debate">
+    <div class="panel">
+      <div class="row" style="justify-content:space-between;margin-bottom:0.75rem">
+        <div>
+          <span class="badge badge-blue" id="role-label"></span>
+          <span id="motion-label" style="font-size:13px;color:var(--muted)"></span>
+        </div>
+        <button class="btn-ghost" onclick="goBack()">← Nueva sesión</button>
+      </div>
+
+      <div class="section-header">Tu discurso</div>
+      <div id="speech-status" class="status-line" style="margin-bottom:0.5rem"></div>
+      <div id="speech-out" class="speech-block"></div>
+
+      <div class="spacer"></div>
+      <div class="row">
+        <button class="btn-primary" id="gen-btn" onclick="generateSpeech()">Generar discurso</button>
+        <button class="btn-ghost" id="speak-btn" onclick="toggleSpeak()" style="display:none">▶ Leer en voz alta</button>
+        <div id="speak-anim" class="speaking-anim" style="display:none">
+          <div class="bar"></div><div class="bar"></div><div class="bar"></div><div class="bar"></div>
+          <span style="margin-left:5px">Hablando</span>
+        </div>
+        <span class="timer-pill" id="timer" style="margin-left:auto">7:00</span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Escuchar rivales y refutar</div>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:0.75rem">Dicta o escribe el argumento que acaban de dar. Generarás refutaciones, desencuadres y engagement lines.</p>
+
+      <div class="row" style="align-items:flex-start;gap:10px">
+        <button class="mic-btn" id="mic-btn" onclick="toggleMic()">
+          <span id="mic-icon">🎙</span>
+        </button>
+        <div style="flex:1">
+          <textarea id="rival" rows="3" placeholder="Escribe o dicta el argumento del rival…"></textarea>
+          <div class="status-line" id="mic-status">Clic en el micrófono para dictar</div>
+        </div>
+      </div>
+
+      <div class="spacer"></div>
+      <button class="btn-primary" id="ref-btn" onclick="generateRefutation()">Analizar y refutar</button>
+
+      <div id="ref-panel" style="display:none;margin-top:1rem">
+        <div class="divider"></div>
+        <div class="section-header">Análisis del argumento rival</div>
+        <div id="ref-out" class="speech-block"></div>
+      </div>
+    </div>
+
+    <div id="history-panel" class="panel" style="display:none">
+      <div class="row" style="justify-content:space-between">
+        <div class="panel-title" style="margin:0">Historial de refutaciones</div>
+        <span class="collapse" id="hist-toggle" onclick="toggleHistory()">▲ Colapsar</span>
+      </div>
+      <div id="hist-body" style="margin-top:0.75rem">
+        <ul class="refutation-list" id="hist-list"></ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let role = null, motion = '', lang = 'es', apiKey = '';
+  let speech = '', isSpeaking = false, utterance = null;
+  let timerInt = null, secs = 420;
+  let recog = null, recState = false;
+  let history = [], histOpen = true;
+
+  const ROLES = {
+    OG: { label: 'Opening Government', side: 'Government', pos: 1 },
+    OO: { label: 'Opening Opposition', side: 'Opposition', pos: 2 },
+    CG: { label: 'Closing Government', side: 'Government', pos: 3 },
+    CO: { label: 'Closing Opposition', side: 'Opposition', pos: 4 }
+  };
+
+  const LANG_NAMES = { es: 'español', en: 'English', fr: 'français' };
+  const LANG_BCP  = { es: 'es-ES', en: 'en-GB', fr: 'fr-FR' };
+
+  const ROLE_INST = {
+    OG: `- Define el modelo claramente (quién, qué, cómo, por qué ahora)
+- Establece el mejor caso del gobierno con 2-3 argumentos sólidos (mecanismo + impacto + prioridad)
+- Añade un punto de principio o valor
+- Cierre motivador`,
+    OO: `- Refuta el modelo más probable del gobierno y ofrece un contramodelo
+- Presenta 2-3 argumentos propios de oposición con desencuadres
+- Reencuadra el debate a tu favor`,
+    CG: `- Reconoce brevemente lo dicho por OG sin repetirlo
+- Presenta una EXTENSIÓN genuina: eje nuevo que OG no tocó
+- Refuta los argumentos más fuertes de Opening Opposition`,
+    CO: `- Summary: sintetiza por qué la oposición gana el debate en su conjunto
+- Destruye los argumentos del gobierno con refutaciones directas
+- Extensión nueva (eje que OO no tocó) y cierre poderoso`
+  };
+
+  function toggleKey() {
+    const inp = document.getElementById('api-key');
+    const btn = inp.nextElementSibling;
+    if (inp.type === 'password') { inp.type = 'text'; btn.textContent = 'Ocultar'; }
+    else { inp.type = 'password'; btn.textContent = 'Mostrar'; }
+  }
+
+  function pickRole(btn) {
+    document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    role = btn.dataset.role;
+  }
+
+  function startDebate() {
+    apiKey = document.getElementById('api-key').value.trim();
+    motion = document.getElementById('motion').value.trim();
+    lang   = document.getElementById('lang').value;
+    if (!apiKey) { alert('Introduce tu API Key de Anthropic.'); return; }
+    if (!motion) { alert('Escribe una moción.'); return; }
+    if (!role)   { alert('Selecciona tu rol.'); return; }
+
+    document.getElementById('setup').classList.remove('on');
+    document.getElementById('debate').classList.add('on');
+    document.getElementById('role-label').textContent = ROLES[role].label;
+    document.getElementById('motion-label').textContent = '"' + motion.substring(0,55) + (motion.length>55?'…':'') + '"';
+  }
+
+  function goBack() {
+    document.getElementById('debate').classList.remove('on');
+    document.getElementById('setup').classList.add('on');
+    if (window.speechSynthesis) speechSynthesis.cancel();
+    clearInterval(timerInt);
+    isSpeaking = false; speech = ''; secs = 420;
+    document.getElementById('speech-out').textContent = '';
+    document.getElementById('speech-out').classList.remove('streaming');
+    document.getElementById('speak-btn').style.display = 'none';
+    document.getElementById('timer').textContent = '7:00';
+    document.getElementById('timer').className = 'timer-pill';
+    document.getElementById('rival').value = '';
+    document.getElementById('ref-panel').style.display = 'none';
+    document.getElementById('history-panel').style.display = 'none';
+    history = [];
+  }
+
+  // ── Claude streaming ──────────────────────────────────────────────────────
+  async function streamClaude(system, user, el, onDone) {
+    el.textContent = '';
+    el.classList.add('streaming');
+    let full = '';
+
+    try {
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01'
+        },
+        body: JSON.stringify({
+          model: 'claude-opus-4-5',
+          max_tokens: 2000,
+          stream: true,
+          system,
+          messages: [{ role: 'user', content: user }]
+        })
+      });
+
+      if (!res.ok) {
+        const txt = await res.text();
+        el.classList.remove('streaming');
+        showError(el, 'Error ' + res.status + ': ' + txt.substring(0,300));
+        return null;
+      }
+
+      const reader = res.body.getReader();
+      const dec = new TextDecoder();
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        for (const line of dec.decode(value).split('\n')) {
+          if (!line.startsWith('data: ')) continue;
+          const data = line.slice(6);
+          if (data === '[DONE]') continue;
+          try {
+            const j = JSON.parse(data);
+            if (j.type === 'content_block_delta' && j.delta?.text) {
+              full += j.delta.text;
+              el.textContent = full;
+              el.scrollTop = el.scrollHeight;
+            }
+          } catch(e) {}
+        }
+      }
+      el.classList.remove('streaming');
+      if (onDone) onDone(full);
+      return full;
+    } catch(err) {
+      el.classList.remove('streaming');
+      showError(el, 'Error de red: ' + err.message);
+      return null;
+    }
+  }
+
+  function showError(el, msg) {
+    el.innerHTML = '<div class="error-box">' + msg + '</div>';
+  }
+
+  // ── Generar discurso ──────────────────────────────────────────────────────
+  async function generateSpeech() {
+    const btn = document.getElementById('gen-btn');
+    const out = document.getElementById('speech-out');
+    const st  = document.getElementById('speech-status');
+    btn.disabled = true; btn.textContent = 'Generando…';
+    st.textContent = 'Elaborando discurso de 7 minutos…';
+    document.getElementById('speak-btn').style.display = 'none';
+
+    const r = ROLES[role];
+    const ln = LANG_NAMES[lang];
+
+    const sys = `Eres un debatiente experto en formato British Parliamentary (BP) con años de experiencia competitiva. Tu retórica es poderosa, tus argumentos son sólidos y tu delivery es memorable. Responde siempre en ${ln}.`;
+
+    const usr = `Genera un discurso de 7 minutos (aprox. 950 palabras) en ${ln} para el rol de ${r.label} en el siguiente debate BP.
+
+MOCIÓN: "${motion}"
+ROL: ${r.label} (${r.side}, posición #${r.pos} en BP)
+
+INSTRUCCIONES DEL ROL:
+${ROLE_INST[role]}
+
+ESTRUCTURA OBLIGATORIA:
+1. Hook de apertura impactante (anécdota, dato o pregunta retórica)
+2. Encuadre del debate (define el terreno a tu favor)
+3. Argumentos principales (PEEL: Punto → Evidencia → Explicación → Link a la moción)
+4. Engagement con rivales o refutaciones anticipadas
+5. Conclusión memorable y llamada a los jueces
+
+ESTILO:
+- Usa frases de engagement: "Pregunto a los jueces…", "Mi honorable colega afirma…", "Este es el corazón del debate…"
+- Tono oral: natural, directo, como si se pronunciara en voz alta
+- Varía el ritmo: frases cortas para impacto, largas para desarrollo
+- ~950 palabras en total`;
+
+    const result = await streamClaude(sys, usr, out, (text) => {
+      speech = text;
+      st.textContent = 'Discurso listo · ' + text.split(/\s+/).length + ' palabras aprox.';
+      document.getElementById('speak-btn').style.display = 'inline-flex';
+    });
+
+    btn.disabled = false;
+    btn.textContent = result ? 'Regenerar discurso' : 'Generar discurso';
+  }
+
+  // ── TTS ──────────────────────────────────────────────────────────────────
+  function toggleSpeak() {
+    if (isSpeaking) { speechSynthesis.cancel(); return; }
+    if (!speech) return;
+
+    utterance = new SpeechSynthesisUtterance(speech);
+    utterance.lang = LANG_BCP[lang];
+    utterance.rate = 0.95;
+
+    utterance.onstart = () => {
+      isSpeaking = true;
+      document.getElementById('speak-btn').style.display = 'none';
+      document.getElementById('speak-anim').style.display = 'inline-flex';
+      startTimer();
+    };
+    const end = () => {
+      isSpeaking = false;
+      document.getElementById('speak-btn').style.display = 'inline-flex';
+      document.getElementById('speak-anim').style.display = 'none';
+      clearInterval(timerInt);
+    };
+    utterance.onend = end; utterance.onerror = end;
+    speechSynthesis.speak(utterance);
+  }
+
+  function startTimer() {
+    secs = 420; updateTimer();
+    timerInt = setInterval(() => { secs--; updateTimer(); if (secs <= -120) clearInterval(timerInt); }, 1000);
+  }
+
+  function updateTimer() {
+    const el = document.getElementById('timer');
+    const m = Math.floor(Math.abs(secs)/60), s = Math.abs(secs)%60;
+    el.textContent = (secs<0?'-':'') + m + ':' + String(s).padStart(2,'0');
+    el.className = 'timer-pill ' + (secs>60?'active':secs>0?'warning':'danger');
+  }
+
+  // ── Micrófono ─────────────────────────────────────────────────────────────
+  function toggleMic() {
+    if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+      document.getElementById('mic-status').textContent = 'Reconocimiento de voz no disponible. Escribe manualmente.';
+      return;
+    }
+    if (recState) { recog.stop(); return; }
+
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    recog = new SR();
+    recog.lang = LANG_BCP[lang];
+    recog.continuous = true;
+    recog.interimResults = true;
+
+    const input = document.getElementById('rival');
+    let base = input.value;
+
+    recog.onstart = () => {
+      recState = true;
+      document.getElementById('mic-btn').classList.add('recording');
+      document.getElementById('mic-icon').textContent = '⏹';
+      document.getElementById('mic-status').textContent = 'Grabando… habla el argumento del rival';
+    };
+    recog.onresult = (e) => {
+      let interim = '';
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        if (e.results[i].isFinal) base += e.results[i][0].transcript + ' ';
+        else interim += e.results[i][0].transcript;
+      }
+      input.value = base + interim;
+    };
+    const stopRec = () => {
+      recState = false;
+      document.getElementById('mic-btn').classList.remove('recording');
+      document.getElementById('mic-icon').textContent = '🎙';
+      document.getElementById('mic-status').textContent = 'Grabación finalizada. Edita si es necesario.';
+      base = input.value;
+    };
+    recog.onend = stopRec; recog.onerror = stopRec;
+    recog.start();
+  }
+
+  // ── Refutación ────────────────────────────────────────────────────────────
+  async function generateRefutation() {
+    const rival = document.getElementById('rival').value.trim();
+    if (!rival) { alert('Escribe o dicta el argumento del rival primero.'); return; }
+
+    const btn = document.getElementById('ref-btn');
+    const out = document.getElementById('ref-out');
+    const ln = LANG_NAMES[lang];
+    btn.disabled = true; btn.textContent = 'Analizando…';
+    document.getElementById('ref-panel').style.display = 'block';
+
+    const sys = `Eres un analista de debate BP de alto nivel. Desmenuza argumentos rivales y genera respuestas efectivas y directas. Responde en ${ln}.`;
+
+    const usr = `Analiza el argumento rival y genera una respuesta estratégica para el rol de ${ROLES[role].label} en la moción: "${motion}".
+
+ARGUMENTO RIVAL:
+"${rival}"
+
+Estructura tu respuesta así:
+
+## Diagnóstico
+Tipo de argumento (consecuencialista / de principio / comparativo / empírico) y 2-3 puntos débiles concretos.
+
+## Refutaciones directas
+3 refutaciones listas para usar. Cada una en 2-3 líneas, atacando la premisa, el mecanismo o el impacto.
+
+## Desencuadre
+2 opciones para reencuadrar el debate a tu favor. Cambia el terreno donde se lucha.
+
+## Engagement lines
+3 frases breves y poderosas para decir en el debate ahora mismo. Incluye al menos una pregunta retórica y un remate con punch.
+
+Tono: directo, de debate real. Frases listas para pronunciar.`;
+
+    await streamClaude(sys, usr, out, (text) => {
+      history.unshift({ rival: rival.substring(0,80)+(rival.length>80?'…':''), text });
+      renderHistory();
+      document.getElementById('history-panel').style.display = 'block';
+      document.getElementById('rival').value = '';
+      document.getElementById('mic-status').textContent = 'Clic en el micrófono para dictar';
+    });
+
+    btn.disabled = false; btn.textContent = 'Analizar y refutar';
+  }
+
+  function renderHistory() {
+    document.getElementById('hist-list').innerHTML = history.map((it, i) =>
+      `<li><span class="ref-label">Arg. #${history.length-i}</span>${it.rival}</li>`
+    ).join('');
+  }
+
+  function toggleHistory() {
+    histOpen = !histOpen;
+    document.getElementById('hist-body').style.display = histOpen ? 'block' : 'none';
+    document.getElementById('hist-toggle').textContent = histOpen ? '▲ Colapsar' : '▼ Expandir';
+  }
+</script>
+</body>
+</html>
