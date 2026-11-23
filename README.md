@@ -16,15 +16,15 @@ Diario y portafolio de mi macrocurso de IA (30 nov 2026 – 30 may 2027): de doc
 
 | Herramienta | Qué hace | Asignatura / uso | ¿Usa IA en directo? | Mejorar en el curso |
 | --- | --- | --- | --- | --- |
-| [Debate.AI](debate_ai.html) | Entrenador virtual de debate en formato British Parliamentary | … | Sí, API de Anthropic | ✅ Módulo 3 |
-| [Astrolabio · Casefile BP](astrocasefile.html) | Fichas de casos, roles y estrategia para debate BP | … | No | ✅ |
-| … | … | … | … | |
+| [Debate.AI](debate_ai.html) | Entrenador virtual de debate en formato British Parliamentary | No es para asignatura | Sí, API de Anthropic | ✅ Módulo 3 |
+| [Astrolabio · Casefile BP](astrocasefile.html) | Fichas de casos, roles y estrategia para debate BP | No es para asignatura | No | ✅ |
+| Redacción ficticia | Permite que los estudiantes adquieran roles periodísticos y trabajen en función de lo estipulado coordinándose a partir de este proyecto y generando contenido periodístico con estilo de medio de comunicación digital | Teoría del Periodismo | No | No |
 
 ## Portafolio
 
 | Módulo | Pieza | Estado |
 | --- | --- | --- |
-| 0. Puesta a punto | Este repositorio, el diario y el inventario | En curso |
+| 0. Puesta a punto | Este repositorio, el diario y el inventario | Completado |
 | 1. Fundamentos | Laboratorio de tokens (HTML) | Pendiente |
 | 2. Programar | Monitor de titulares (Python) | Pendiente |
 | 3. Construir con modelos | Rueda de prensa simulada y asistente con RAG | Pendiente |
